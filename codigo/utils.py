@@ -4,7 +4,6 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 from sklearn.preprocessing import MinMaxScaler
-
 BASE_FOLDER = 'FaceMask166'
 
 def load_image(image_name, gray=False, crop=False, base_folder=BASE_FOLDER):
