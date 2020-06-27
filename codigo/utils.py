@@ -180,7 +180,25 @@ def calculate_feature_df(dataset, feature_fn, feature_name, max_images=None, sho
     return feature_df
 
 
-def plot_cm(cm, title='', labels=None, colorbar=False):
+
+def calculate_feature_multiple_df(dataset, feature_fn, configs, basename='', **kwargs):
+    """Calculate multiple configurations of a feature."""
+    df = None
+    
+    for name, params in configs.items():
+        feature_name = f'{basename}-{name}' if basename else name
+
+        feature_df = calculate_feature_df(dataset, feature_fn, feature_name, **kwargs, **params)
+
+        if df is None:
+            df = feature_df
+        else:
+            df = df.merge(feature_df, right_index=True, left_index=True)
+            
+    return df
+
+
+def plot_cm(cm, title='', labels=None, colorbar=False, setsize=True):
     """Plotear una matriz de confusion.
 
     Args:
@@ -194,6 +212,11 @@ def plot_cm(cm, title='', labels=None, colorbar=False):
 
     if labels is None:
         labels = ticks + 1
+
+    if setsize:
+        n_classes = len(labels)
+        plt.figure(figsize=(0.375 * n_classes, 0.25 * n_classes))
+
 
     plt.imshow(cm, interpolation='nearest', cmap=plt.cm.Blues)
     if colorbar:
@@ -255,6 +278,22 @@ def normalize_df(df, keep_nonorm=True, ignore=['label', 'image_number']):
     return df_norm.merge(df[ignore], how='inner', right_index=True, left_index=True)
 
 
+def get_cols_startwith(df, name, suffix=None, color=False, norm=True):
+    """Dado un DF retorna las columnas que empiezan con cierto nombre."""
+    base_name = name
+    if color:
+        base_name += '-color'
+    if suffix:
+        base_name += f'-{suffix}'
+
+    if norm:
+        comply_norm = lambda col: not col.endswith('_nonorm')
+    else:
+        comply_norm = lambda col: col.endswith('_nonorm')
+
+    return [col for col in df.columns if col.startswith(base_name) and compy_norm(col)]
+
+
 def PCA(x_train, x_test, x_val, n_components):
     """
     Realiza la transformación PCA de los datos a tan solo 'n_components' características.
@@ -278,3 +317,43 @@ def SFS(x_train, y_train, x_test, x_val, n_features, method="fisher", show=False
     x_test = x_test[:, s_sfs]
     x_val = x_val[:, s_sfs]
     return x_train, x_test, x_val
+
+
+
+
+##### SIFT ######
+# Pickle sift stuff
+
+import pickle
+
+def pickle_keypoint(point):
+    return (point.pt, point.size, point.angle, point.response, point.octave, point.class_id)
+
+def unpickle_keypoint(t):
+    (x, y), size, angle, response, octave, class_id = t
+    return cv2.KeyPoint(x=x, y=y, _size=size, _angle=angle, _response=response, _octave=octave,
+                        _class_id=class_id)
+
+def pickle_sift(l, filepath):
+    obj = [([pickle_keypoint(p) for p in keypoints], d) for keypoints, d in l]
+    with open(filepath, 'wb') as f:
+        pickle.dump(obj, f)
+
+def unpickle_sift(filepath):
+    with open(filepath, 'rb') as f:
+        obj = pickle.load(f)
+        
+    l = [([unpickle_keypoint(p) for p in keypoints], d) for keypoints, d in obj]
+    return l
+
+
+def save_list_txt(l, filepath):
+    with open(filepath, 'w') as f:
+        for item in l:
+            f.write(f'{item}\n')
+    print(f'Saved to {filepath}')
+    
+def load_list_txt(filepath):
+    with open(filepath, 'r') as f:
+        return [l.strip() for l in f.readlines()]
+
