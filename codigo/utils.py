@@ -121,7 +121,6 @@ def features_to_df(dataset, features, feature_name):
 def calculate_feature_df(dataset, feature_fn, feature_name, max_images=None, show=False,
                          fix_len_mode='pad',
                          **kwargs):
-def calculate_feature_df(dataset, feature_fn, feature_name, **kwargs):
     """Calcula un feature con `feature_fn()` para todas las imagenes de un dataset, retorna un DF.
 
     Args:
