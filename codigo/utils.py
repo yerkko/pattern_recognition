@@ -4,10 +4,11 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 from sklearn.preprocessing import MinMaxScaler
+from tqdm.notebook import tqdm
+
 from pybalu.feature_transformation import pca
 from pybalu.feature_selection import sfs
 BASE_FOLDER = 'FaceMask166'
-
 
 def load_image(image_name, gray=False, crop=False, base_folder=BASE_FOLDER):
     """Carga una imagen con open-cv."""
@@ -69,6 +70,57 @@ def create_df(dataset, merge=None):
     return df
 
 
+def calculate_features(dataset, feature_fn, max_images=None, show=False, **kwargs):
+    """Calcula features para imagenes de un dataset.
+    
+    Nota: esta funcion podria ser reutilizada en calculate_features_df()
+    """
+    print(f'Calculating features')
+    features = []
+    
+    if max_images is None:
+        data = dataset
+    else:
+        data = dataset[:max_images]
+
+    # Cargar imagenes y calcular vectores de features
+    for sample in tqdm(data, disable=not show):
+        image = sample[0]
+
+        image_features = feature_fn(image, **kwargs)
+        features.append(image_features)
+    
+    return features
+
+
+def features_to_df(dataset, features, feature_name):
+    """Transforma un array de features a un DataFrame.
+    
+    Nota: esta funcion podria ser reutilizada en calculate_feature_df()
+    
+    Args:
+        dataset -- formato que retorna `load_dataset()`
+        features -- np.array de shape n_images, n_features
+        feature_name -- string que se usa como nombre base.
+        
+    Returns:
+        dataframe
+    """
+    image_names = [sample[1] for sample in dataset]
+    
+    n_images, n_feats = features.shape
+
+    columns = [f'{feature_name}_{idx}' for idx in range(n_feats)]
+    
+    feature_df = pd.DataFrame(features, index=image_names, columns=columns)
+
+    return feature_df
+
+
+
+def calculate_feature_df(dataset, feature_fn, feature_name, max_images=None, show=False,
+                         fix_len_mode='pad',
+                         **kwargs):
 def calculate_feature_df(dataset, feature_fn, feature_name, **kwargs):
     """Calcula un feature con `feature_fn()` para todas las imagenes de un dataset, retorna un DF.
 
@@ -81,16 +133,42 @@ def calculate_feature_df(dataset, feature_fn, feature_name, **kwargs):
     print(f'Calculating {feature_name}')
     image_names = []
     features = []
+    
+    if max_images is None:
+        data = dataset
+    else:
+        data = dataset[:max_images]
 
     # Cargar imagenes y calcular vectores de features
-    for sample in dataset:
+    for sample in tqdm(data, disable=not show):
         image = sample[0]
         image_names.append(sample[1])
 
         image_features = feature_fn(image, **kwargs)
         features.append(image_features)
-
+    
+    # Pass to numpy
     features = np.array(features)
+    
+    
+    # DEPRECATED: see new functions for SIFT and SURF features    
+    #     if len(features.shape) == 1 and len(features[0].shape) == 1:
+    #         # HACK: assume that in this case the image_features have different lengths, so pad to the greatest
+    #         if fix_len_mode == 'pad':
+    #             max_len = max(len(f) for f in features)
+    #             features = np.array([
+    #                 np.pad(f, pad_width=(0, max_len-len(f)), mode='constant', constant_values=0) for f in features
+    #             ])
+    #         elif fix_len_mode == 'crop':
+    #             min_len = min(len(f) for f in features)
+    #             features = np.array([f[:min_len] for f in features])
+
+    
+    if len(features.shape) != 2:
+        print('Cannot parse to DF')
+        # HACK: for cases where image_features have different lengths
+        return features
+
     n_images, n_feats = features.shape
 
     # Nombres de los features, e.g. 'hog_0', 'hog_1', etc
@@ -116,7 +194,7 @@ def plot_cm(cm, title='', labels=None, colorbar=False):
     ticks = np.arange(n_labels)
 
     if labels is None:
-        labels = ticks
+        labels = ticks + 1
 
     plt.imshow(cm, interpolation='nearest', cmap=plt.cm.Blues)
     if colorbar:
