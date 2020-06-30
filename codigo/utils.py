@@ -6,8 +6,12 @@ import matplotlib.pyplot as plt
 from sklearn.preprocessing import MinMaxScaler
 from tqdm.notebook import tqdm
 
-from pybalu.feature_transformation import pca
-from pybalu.feature_selection import sfs
+try:
+    from pybalu.feature_transformation import pca
+    from pybalu.feature_selection import sfs
+except:
+    print('Can\'t import pybalu, PCA() and SFS() wont work')
+
 BASE_FOLDER = 'FaceMask166'
 
 def load_image(image_name, gray=False, crop=False, base_folder=BASE_FOLDER):
