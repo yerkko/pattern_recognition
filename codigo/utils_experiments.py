@@ -48,9 +48,16 @@ def evaluate(model, x_test, y_test):
     return accuracy, cm
 
 
-def run_experiment(dataset_df, train_cols,
-                   method='KNN', n_neighbors=3, hidden_layer_sizes=(100,),
-                   option='validation', n_trees = 100, ensemble = False, show_cm=True, **kwargs):
+
+DEFAULT_BAGGING_KWARGS = {
+    'max_samples': 0.5,
+    'max_features': 0.5,
+}
+
+def run_experiment(dataset_df, train_cols, option='validation',
+                   method='KNN', n_neighbors=3, hidden_layer_sizes=(100,), n_trees=100,
+                   bagging=False, bagging_kwargs=DEFAULT_BAGGING_KWARGS,
+                   show_cm=True, **kwargs):
     if len(train_cols) == 0:
         raise Exception('No columns provided to run_experiment()')
     
@@ -85,8 +92,8 @@ def run_experiment(dataset_df, train_cols,
     else:
         raise Exception(f'Unkwown model: {method}')
         
-    if ensemble:
-        model = BaggingClassifier(model, max_samples = 0.5, max_features = 0.5)
+    if bagging:
+        model = BaggingClassifier(model, **bagging_kwargs)
         
     # Entrenar clasificador
     print('Training...')
@@ -103,7 +110,7 @@ def run_experiment(dataset_df, train_cols,
     return val_accuracy
 
 
-def find_best_strategy(df, cols, strategies, option='val'):
+def find_best_strategy(df, cols, strategies, option='val', **kwargs):
     """Corre experimentos con distintas estrategias, y retorna la mejor estrategia.
     
     Args:
@@ -117,7 +124,7 @@ def find_best_strategy(df, cols, strategies, option='val'):
     
     for strategy in strategies:
         print(strategy, end='\t', flush=True)
-        acc = run_experiment(df, cols, option=option, show_cm=False, **strategy)
+        acc = run_experiment(df, cols, option=option, show_cm=False, **strategy, **kwargs)
 
         results.append((acc, strategy))
 

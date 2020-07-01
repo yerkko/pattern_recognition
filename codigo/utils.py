@@ -10,11 +10,19 @@ try:
     from pybalu.feature_transformation import pca
     from pybalu.feature_selection import sfs
 except:
-    print('Can\'t import pybalu, PCA() and SFS() wont work')
+    print('Can\'t import pybalu, some functions wont work')
+
+    
+N_PEOPLE_A = 16
+N_PEOPLE_B = 40
+N_PEOPLE_C = 100
+N_PEOPLE_D = 166
+
 
 BASE_FOLDER = 'FaceMask166'
+PINERA_IMAGE = 'FM000020_03'
 
-def load_image(image_name, gray=False, crop=False, base_folder=BASE_FOLDER):
+def load_image(image_name, gray=False, crop=False, flip=False, base_folder=BASE_FOLDER):
     """Carga una imagen con open-cv."""
     if not image_name.endswith('.jpg'):
         image_name = f'{image_name}.jpg'
@@ -33,11 +41,14 @@ def load_image(image_name, gray=False, crop=False, base_folder=BASE_FOLDER):
 
     if crop:
         image = image[:128, :]
+        
+    if flip:
+        image = cv2.flip(image, 1) # Flip around y-axis
 
     return image
 
 
-def load_dataset(n_images, gray=True, crop=True):
+def load_dataset(n_images, gray=True, crop=True, aug_flip=False):
     """Carga un dataset de las primeras N imagenes.
 
     Returns:
@@ -54,6 +65,11 @@ def load_dataset(n_images, gray=True, crop=True):
             image = load_image(image_name, gray=gray, crop=crop)
 
             dataset.append((image, image_name, i_image, j))
+            
+            is_training = j <= 3
+            if is_training and aug_flip:
+                image_flipped = load_image(image_name, gray=gray, crop=crop, flip=True)
+                dataset.append((image_flipped, f'{image_name}_flipped', i_image, j))
 
     return dataset
 
@@ -72,6 +88,33 @@ def create_df(dataset, merge=None):
         df = df.merge(merge, right_index=True, left_index=True)
 
     return df
+
+
+def filter_df_by_dataset(df, dataset_name):
+    if dataset_name == 'A':
+        n_people = N_PEOPLE_A
+    elif dataset_name == 'B':
+        n_people = N_PEOPLE_B
+    elif dataset_name == 'C':
+        n_people = N_PEOPLE_C
+    elif dataset_name == 'D':
+        n_people = N_PEOPLE_D
+    else:
+        raise Exception(f'Unknown dataset: {dataset_name}')
+        
+
+    image_basenames = [f'FM{i_image:06d}' for i_image in range(1, n_people+1)]
+    
+    images_from_dataset = set([
+        image_name
+        for image_name in list(df.index) if any(
+            image_name.startswith(basename)
+            for basename in image_basenames
+        )
+    ])
+    
+    
+    return df.loc[df.index.isin(images_from_dataset)]
 
 
 def calculate_features(dataset, feature_fn, max_images=None, show=False, **kwargs):
