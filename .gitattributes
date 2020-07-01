@@ -1,8 +1,0 @@
-codigo/features/datasetA_hog-color-v2_flipped.csv filter=lfs diff=lfs merge=lfs -text
-codigo/features/datasetA_sift_feats.dat filter=lfs diff=lfs merge=lfs -text
-codigo/features/datasetB_hog-color-v2_flipped.csv filter=lfs diff=lfs merge=lfs -text
-codigo/features/datasetC_hog-color-v2_flipped.csv filter=lfs diff=lfs merge=lfs -text
-codigo/features/datasetD_gabor_flipped.csv filter=lfs diff=lfs merge=lfs -text
-codigo/features/datasetD_haralick_flipped.csv filter=lfs diff=lfs merge=lfs -text
-codigo/features/datasetD_hog-color-v2_flipped.csv filter=lfs diff=lfs merge=lfs -text
-codigo/features/hog-color-v2-sfs-50.txt filter=lfs diff=lfs merge=lfs -text

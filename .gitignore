@@ -140,3 +140,6 @@ dmypy.json
 
 # Local History for Visual Studio Code
 .history/
+
+# Heavy features
+codigo/features/datasetD_hog-color-v2_flipped.csv
