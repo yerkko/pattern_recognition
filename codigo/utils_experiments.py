@@ -107,7 +107,7 @@ def run_experiment(dataset_df, train_cols, option='validation',
     if show_cm:
         plot_cm(val_cm, title=f'{option} CM')
 
-    return val_accuracy
+    return val_accuracy, val_cm
 
 
 def find_best_strategy(df, cols, strategies, option='val', **kwargs):
@@ -124,7 +124,7 @@ def find_best_strategy(df, cols, strategies, option='val', **kwargs):
     
     for strategy in strategies:
         print(strategy, end='\t', flush=True)
-        acc = run_experiment(df, cols, option=option, show_cm=False, **strategy, **kwargs)
+        acc, _ = run_experiment(df, cols, option=option, show_cm=False, **strategy, **kwargs)
 
         results.append((acc, strategy))
 

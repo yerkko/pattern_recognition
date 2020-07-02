@@ -90,7 +90,7 @@ def create_df(dataset, merge=None):
     return df
 
 
-def filter_df_by_dataset(df, dataset_name):
+def filter_df_by_dataset(df, dataset_name, include_flipped=True):
     if dataset_name == 'A':
         n_people = N_PEOPLE_A
     elif dataset_name == 'B':
@@ -113,6 +113,8 @@ def filter_df_by_dataset(df, dataset_name):
         )
     ])
     
+    if not include_flipped:
+        images_from_dataset = [image_name for image_name in images_from_dataset if 'flipped' not in image_name]
     
     return df.loc[df.index.isin(images_from_dataset)]
 
